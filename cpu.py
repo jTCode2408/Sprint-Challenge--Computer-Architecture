@@ -11,8 +11,8 @@ class CPU:
         self.ram = [0] *256
         self.reg =[0] *8
         self.pc =0
-        self.stackp=7 #r7 is resreved top of stack location (r4 if empty)
-        self.equal=False
+        self.sp=7 #r7 is resreved top of stack location (r4 if empty)
+        self.equal=0
 
     def ops(self, operation):
         branch_table ={
@@ -26,7 +26,7 @@ class CPU:
             0b00010001: self.RET,
             0b10100111: self.CMP,
             0b01010100: self.JMP,
-            0b01010110 : self.JNE,
+            0b01010110 :self.JNE,
             0b01010101: self.JEQ
         }
 
@@ -58,39 +58,38 @@ class CPU:
         self.pc+=3
 
     def PUSH(self):
-        #decrement stackp
-        self.stackp -=1
-        #set reg place
+
+        self.sp -=1
         reg = self.ram[self.pc + 1]
-        #set val as reg splace
         value = self.reg[reg]
-        #stackp is value
-        self.ram[self.stackp] = value
-        #move pc pointer
+        self.ram[self.sp] = value
         self.pc += 2
 
     def POP(self):
-        value = self.ram[self.stackp]
+        value = self.ram[self.sp]
         #get next ram
         self.reg[self.ram[self.pc + 1]] = value
         #increment stackp
-        self.stackp +=1
+        self.sp +=1
         self.pc += 2
 
-        def CALL(self, operand_a, operand_b):
-            self.PUSH(self.pc+2)
-            self.pc =self.reg[operand_a]
+    def CALL(self, reg):
+        self.reg[self.sp] -= 1
+        self.ram_write(self.pc + 2, self.reg[self.sp])
 
 
-        def RET(self):
-            self.pc = self.POP()
+    def RET(self):
+        self.pc = self.ram_read(self.reg[self.sp])
+        self.reg[self.sp] += 1
 
-        def CMP(self):
-        def JMP(self):
-        def JEQ(self):
-        def JNE(self):
+    def JMP(self):
+        self.pc = self.reg[register]
 
-## check- Need Stack & CALL/RET (& subroutine calls) from Wed/Thrus emplimented to work?--
+    def JEQ(self):
+        pass
+    def JNE(self):
+        pass
+
 ### CALL ###:
 #subroutine (function) at the address stored in the register.
 #address of instruction directly after CALL pushed on stack. #returns where we left off after fn finishes
@@ -152,13 +151,15 @@ class CPU:
 
     def load(self, f):
         """Load a program into memory."""
-        file = f
-        program = open(f"{file}", "rb")
+        filename = sys.argv[1]
         address = 0
-        for line in program:
-            if line[0] == "0" or line[0] == "1":
-                op = line.split("#", 1)[0]
-                self.ram[address] = int(op, 2)
+        with open(filename) as f:
+            for line in f:
+                value = line.split("#")[0].strip()
+                if value == '':
+                    continue
+                v = int(value, 2)
+                self.ram[address] = v
                 address += 1
     
         # For now, we've just hardcoded a program:
