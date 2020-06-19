@@ -2,6 +2,23 @@
 
 import sys
 
+LDI = 0b10000010 
+PRN = 0b01000111
+HLT = 0b00000001 
+MUL = 0b10100010
+PUSH = 0b01000101 
+POP = 0b01000110
+CALL = 0b01010000
+RET = 0b00010001
+JMP = 0b01010100
+CMP = 0b10100111
+JNE = 0b01010110
+JEQ = 0b01010101
+
+
+
+
+
 class CPU:
     """Main CPU class."""
 
@@ -12,30 +29,20 @@ class CPU:
         self.reg =[0] *8
         self.pc =0
         self.sp=7 #r7 is resreved top of stack location (r4 if empty)
-        self.equal=0
-
-    def ops(self, operation):
-        branch_table ={
-            0b10000010: self.LDI,
-            0b01000111: self.PRN,
-            0b10100010: self.MULT,
-            0b00000001: self.HLT,
-            0b01000101: self.PUSH,
-            0b01000110: self.POP,
-            0b01010000: self.CALL,
-            0b00010001: self.RET,
-            0b10100111: self.CMP,
-            0b01010100: self.JMP,
-            0b01010110 :self.JNE,
-            0b01010101: self.JEQ
-        }
-
-        if operation in branch_table:
-            branch_table[operation]()
-
-        else:
-            print(f'Unknown instruction {operation} at address {self.pc}')
-        sys.exit(1)
+        self.E=False
+        self.branch_table ={}
+        self.branch_table[LDI] = self.LDI, 
+        self.branch_table[PRN] = self.PRN,
+        self.branch_table[HLT] = self.HTL,
+        self.branch_table[MUL] = self.MUL,
+        self.branch_table[PUSH] = self.PUSH, 
+        self.branch_table[POP] = self.POP,
+        self.branch_table[CALL] = self.CALL,
+        self.branch_table[RET] = self.RET,
+        self.branch_table[JMP] = self.JMP,
+        self.branch_table[CMP] = self.CMP,
+        self.branch_table[JNE] = self.JNE,
+        self.branch_table[JEQ] = self.JEQ
 
         
     def LDI(self):
@@ -72,24 +79,6 @@ class CPU:
         #increment stackp
         self.sp +=1
         self.pc += 2
-
-    def CALL(self, reg):
-        self.reg[self.sp] -= 1
-        self.ram_write(self.pc + 2, self.reg[self.sp])
-
-
-    def RET(self):
-        self.pc = self.ram_read(self.reg[self.sp])
-        self.reg[self.sp] += 1
-
-    def JMP(self):
-        self.pc = self.reg[register]
-
-    def JEQ(self):
-        pass
-    def JNE(self):
-        pass
-
 ### CALL ###:
 #subroutine (function) at the address stored in the register.
 #address of instruction directly after CALL pushed on stack. #returns where we left off after fn finishes
@@ -99,46 +88,54 @@ class CPU:
 #Machine code:
 #01010000 00000rrr
 #50 0r
+    def CALL(self, reg):
+        self.reg[self.sp] -= 1
+        self.ram_write(self.pc + 2, self.reg[self.sp])
 
-##### SPRINT TASKS #######
 
-#Add the CMP instruction and equal flag to your LS-8.
-##- CMP:
-#instruction handled by the ALU.
-#CMP registerA registerB
-#Compare the values in two registers.
-#If equal, set the Equal E flag to 1, otherwise set it to 0.
-#If registerA is less than registerB, set the Less-than L flag to 1, otherwise set it to 0.
-#If registerA is greater than registerB, set the Greater-than G flag to 1, otherwise set it to 0.
-#Machine code:
-#10100111 00000aaa 00000bbb
-#A7 0a 0b
+    def RET(self):
+        self.pc = self.ram_read(self.reg[self.sp])
+        self.reg[self.sp] += 1
 
-#Add the JMP instruction.
+    def CMP(self, op_a, op_b):
+        self.alu('CMP', op_a, op_b)
+        self.pc+=3
+
 ##- JMP:
 #Jump to the address stored in the given register.
 #Set the PC to the address stored in the given register.
 #Machine code:
 #01010100 00000rrr
 #54 0r
-
-#Add the JEQ and JNE instructions.
+    def JMP(self):
+        self.pc = self.reg[register]
 ##- JEQ:
 #If equal flag is set (true), jump to address stored in the given register.
 #Machine code:
 #01010101 00000rrr
 #55 0r
-
+    def JEQ(self, op):
+        if self.E ==True:
+            self.pc =self.reg[op]
+        else:
+            self.pc+=2
 ##- JNE:
 #If E flag is clear (false, 0), jump to the address stored in the given register.
 #Machine code:
 #01010110 00000rrr
 #56 0r
+    def JNE(self, op):
+        if self.E ==False:
+            self.pc=self.reg[op]
+        else:
+            self.pc+=2
 
-        
-#Inside the CPU, there are two internal registers used for memory operations: 
- #mdr- data that was read/to write
- #mar- register address being read/written to
+##### SPRINT TASKS #######
+
+#Add the CMP instruction and equal flag to your LS-8.
+#Add the JMP instruction.
+#Add the JEQ and JNE instructions.
+ 
 
  #ram_read:ACCEPT ADDRESS TO READ-- and RETURNS VALUE @ address
  #ram_write:ACCEPT VALUE TO WRITE AND ADDRESS TO WRITE TO
@@ -179,6 +176,16 @@ class CPU:
           #  address += 1
 
 
+##- CMP:
+#instruction handled by the ALU.
+#CMP registerA registerB
+#Compare the values in two registers.
+#If equal, set the Equal E flag to 1, otherwise set it to 0.
+#If registerA is less than registerB, set the Less-than L flag to 1, otherwise set it to 0.
+#If registerA is greater than registerB, set the Greater-than G flag to 1, otherwise set it to 0.
+#Machine code:
+#10100111 00000aaa 00000bbb
+#A7 0a 0b
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
 
@@ -186,6 +193,13 @@ class CPU:
             self.reg[reg_a] += self.reg[reg_b]
         elif op == "MULT":
             self.reg[self.ram[reg_a]] * self.reg[self.ram[reg_b]]
+        elif op =="CMP":
+            if self.reg[reg_a] ==self.reg[reg_b]:
+                self.E =1
+            elif self.reg[reg_a] > self.reg[reg_b]:
+                self.E=1
+            elif self.reg[reg_a] < self.reg[reg_b]:
+                self.E=0
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -218,12 +232,11 @@ class CPU:
         
         self.running =True
 
-        while self.running:
-            self.trace()
+        while self.running is True:
             ir= self.ram_read(self.pc)
             operand_a = self.ram_read(self.pc + 1)
             operand_b = self.ram_read(self.pc + 2)
             #need to  call fn
-            self.ops(ir)
+            self.ops[ir]()
 
 

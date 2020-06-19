@@ -8,5 +8,5 @@ from cpu import *
 
 cpu = CPU()
 
-cpu.load('filename')
+cpu.load('sctest.ls8')
 cpu.run()
