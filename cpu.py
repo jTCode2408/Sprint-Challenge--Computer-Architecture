@@ -20,25 +20,26 @@ class CPU:
 
     def __init__(self):
         """Construct a new CPU."""
-        self.running=False
+        self.running=True
         self.ram = [0] *256
         self.reg =[0] *8
         self.pc =0
         self.sp=7 #r7 is resreved top of stack location (r4 if empty)
-        self.E=False
-        self.branch_table ={}
-        self.branch_table[LDI] = self.LDI, 
-        self.branch_table[PRN] = self.PRN,
-        self.branch_table[HLT] = self.HLT,
-        self.branch_table[MUL] = self.MUL,
-        self.branch_table[PUSH] = self.PUSH, 
-        self.branch_table[POP] = self.POP,
-        self.branch_table[CALL] = self.CALL,
-        self.branch_table[RET] = self.RET,
-        self.branch_table[JMP] = self.JMP,
-        self.branch_table[CMP] = self.CMP,
-        self.branch_table[JNE] = self.JNE,
-        self.branch_table[JEQ] = self.JEQ
+        self.E=True #Equal flag
+        self.branch_table ={
+        LDI: self.LDI, 
+        PRN: self.PRN,
+        HLT: self.HLT,
+        MUL: self.MUL,
+        PUSH: self.PUSH, 
+        POP: self.POP,
+        CALL: self.CALL,
+        RET: self.RET,
+        JMP: self.JMP,
+        CMP: self.CMP,
+        JNE: self.JNE,
+        JEQ: self.JEQ
+        }
 
         
     def LDI(self):
@@ -82,7 +83,7 @@ class CPU:
 #Machine code:
 #01010000 00000rrr
 #50 0r
-    def CALL(self, reg):
+    def CALL(self):
         self.reg[self.sp] -= 1
         self.ram_write(self.pc + 2, self.reg[self.sp])
 
@@ -91,8 +92,10 @@ class CPU:
         self.pc = self.ram_read(self.reg[self.sp])
         self.reg[self.sp] += 1
 
-    def CMP(self, op_a, op_b):
-        self.alu('CMP', op_a, op_b)
+    def CMP(self):
+        reg_a =self.ram_read(self.pc+1)
+        reg_b=self.ram_read(self.pc+2)
+        self.alu('CMP', reg_a, reg_b)
         self.pc+=3
 
 ##- JMP:
@@ -102,15 +105,17 @@ class CPU:
 #01010100 00000rrr
 #54 0r
     def JMP(self):
-        self.pc = self.reg[register]
+        reg =self.ram[self.pc+1]
+        self.pc = self.reg[reg]
 ##- JEQ:
 #If equal flag is set (true), jump to address stored in the given register.
 #Machine code:
 #01010101 00000rrr
 #55 0r
-    def JEQ(self, op):
+    def JEQ(self):
         if self.E ==True:
-            self.pc =self.reg[op]
+            reg=self.ram[self.pc+1]
+            self.pc =self.reg[reg]
         else:
             self.pc+=2
 ##- JNE:
@@ -118,9 +123,10 @@ class CPU:
 #Machine code:
 #01010110 00000rrr
 #56 0r
-    def JNE(self, op):
+    def JNE(self):
         if self.E ==False:
-            self.pc=self.reg[op]
+            reg=self.ram[self.pc+1]
+            self.pc=self.reg[reg]
         else:
             self.pc+=2
 
@@ -224,11 +230,10 @@ class CPU:
 #read memory address
 #store memory address in IR
 ##using ram_read(), read the bytes at PC+1 and PC+2 from RAM into variables operand_a and operand_b in case the instruction needs them.
-        
-        self.running =True
 
+        self.running =True
         while self.running:
             ir= self.ram_read(self.pc)
             #need to  call fn
-            self.branch_table[ir]
+            self.branch_table[ir]()
 
