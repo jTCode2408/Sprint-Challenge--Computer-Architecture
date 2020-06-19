@@ -27,7 +27,7 @@ class CPU:
             branch_table[operation]()
 
         else:
-            raise Exception("Unsupported operation")
+            print(f'Unknown instruction {operation} at address {self.pc}')
         sys.exit(1)
 
         
@@ -70,7 +70,51 @@ class CPU:
         self.stackp +=1
         self.pc += 2
 
-        
+## check- Need Stack & CALL/RET (& subroutine calls) from Wed/Thrus emplimented to work?--
+### CALL ###:
+#subroutine (function) at the address stored in the register.
+#address of instruction directly after CALL pushed on stack. #returns where we left off after fn finishes
+#PC set to the address stored in the given register
+# go to location in RAM and run 1st instruction
+# PC can move forward or backwards from its current location.
+#Machine code:
+#01010000 00000rrr
+#50 0r
+
+##### SPRINT TASKS #######
+
+#Add the CMP instruction and equal flag to your LS-8.
+##- CMP:
+#instruction handled by the ALU.
+#CMP registerA registerB
+#Compare the values in two registers.
+#If equal, set the Equal E flag to 1, otherwise set it to 0.
+#If registerA is less than registerB, set the Less-than L flag to 1, otherwise set it to 0.
+#If registerA is greater than registerB, set the Greater-than G flag to 1, otherwise set it to 0.
+#Machine code:
+#10100111 00000aaa 00000bbb
+#A7 0a 0b
+
+#Add the JMP instruction.
+##- JMP:
+#Jump to the address stored in the given register.
+#Set the PC to the address stored in the given register.
+#Machine code:
+#01010100 00000rrr
+#54 0r
+
+#Add the JEQ and JNE instructions.
+##- JEQ:
+#If equal flag is set (true), jump to address stored in the given register.
+#Machine code:
+#01010101 00000rrr
+#55 0r
+
+##- JNE:
+#If E flag is clear (false, 0), jump to the address stored in the given register.
+#Machine code:
+#01010110 00000rrr
+#56 0r
 
         
 #Inside the CPU, there are two internal registers used for memory operations: 
@@ -88,9 +132,10 @@ class CPU:
 
     def load(self, f):
         """Load a program into memory."""
+       
 
         file = f
-        program = open(f"{file}", "r")
+        program = open(f"{file}", "rb")
         address = 0
         for line in program:
             if line[0] == "0" or line[0] == "1":
