@@ -15,10 +15,6 @@ CMP = 0b10100111
 JNE = 0b01010110
 JEQ = 0b01010101
 
-
-
-
-
 class CPU:
     """Main CPU class."""
 
@@ -33,7 +29,7 @@ class CPU:
         self.branch_table ={}
         self.branch_table[LDI] = self.LDI, 
         self.branch_table[PRN] = self.PRN,
-        self.branch_table[HLT] = self.HTL,
+        self.branch_table[HLT] = self.HLT,
         self.branch_table[MUL] = self.MUL,
         self.branch_table[PUSH] = self.PUSH, 
         self.branch_table[POP] = self.POP,
@@ -53,19 +49,19 @@ class CPU:
 
     def PRN(self):
         reg=self.ram_read(self.pc+1)
-        print(self.reg[reg])
+        value =self.reg[reg]
+        print(value)
         self.pc+=2
 
     def HLT(self):
         self.running =False
         self.pc+=1
 
-    def MULT(self):
-        self.alu('MULT', self.pc+1, self.pc+2)
+    def MUL(self):
+        self.alu('MUL', self.pc+1, self.pc+2)
         self.pc+=3
 
     def PUSH(self):
-
         self.sp -=1
         reg = self.ram[self.pc + 1]
         value = self.reg[reg]
@@ -74,9 +70,7 @@ class CPU:
 
     def POP(self):
         value = self.ram[self.sp]
-        #get next ram
         self.reg[self.ram[self.pc + 1]] = value
-        #increment stackp
         self.sp +=1
         self.pc += 2
 ### CALL ###:
@@ -152,10 +146,11 @@ class CPU:
         address = 0
         with open(filename) as f:
             for line in f:
-                value = line.split("#")[0].strip()
-                if value == '':
+                value = line.split("#")
+                try:
+                    v = int(value[0], 2)
+                except ValueError:
                     continue
-                v = int(value, 2)
                 self.ram[address] = v
                 address += 1
     
@@ -191,10 +186,10 @@ class CPU:
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
-        elif op == "MULT":
-            self.reg[self.ram[reg_a]] * self.reg[self.ram[reg_b]]
+        elif op == "MUL":
+            self.reg[reg_a] * self.reg[reg_b]
         elif op =="CMP":
-            if self.reg[reg_a] ==self.reg[reg_b]:
+            if self.reg[reg_a] == self.reg[reg_b]:
                 self.E =1
             elif self.reg[reg_a] > self.reg[reg_b]:
                 self.E=1
@@ -232,11 +227,8 @@ class CPU:
         
         self.running =True
 
-        while self.running is True:
+        while self.running:
             ir= self.ram_read(self.pc)
-            operand_a = self.ram_read(self.pc + 1)
-            operand_b = self.ram_read(self.pc + 2)
             #need to  call fn
-            self.ops[ir]()
-
+            self.branch_table[ir]
 
