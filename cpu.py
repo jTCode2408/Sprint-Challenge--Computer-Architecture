@@ -12,6 +12,7 @@ class CPU:
         self.reg =[0] *8
         self.pc =0
         self.stackp=7 #r7 is resreved top of stack location (r4 if empty)
+        self.equal=False
 
     def ops(self, operation):
         branch_table ={
@@ -20,7 +21,13 @@ class CPU:
             0b10100010: self.MULT,
             0b00000001: self.HLT,
             0b01000101: self.PUSH,
-            0b01000110: self.POP
+            0b01000110: self.POP,
+            0b01010000: self.CALL,
+            0b00010001: self.RET,
+            0b10100111: self.CMP,
+            0b01010100: self.JMP,
+            0b01010110 : self.JNE,
+            0b01010101: self.JEQ
         }
 
         if operation in branch_table:
@@ -50,7 +57,7 @@ class CPU:
         self.alu('MULT', self.pc+1, self.pc+2)
         self.pc+=3
 
-    def PUSH():
+    def PUSH(self):
         #decrement stackp
         self.stackp -=1
         #set reg place
@@ -62,13 +69,26 @@ class CPU:
         #move pc pointer
         self.pc += 2
 
-    def POP():
+    def POP(self):
         value = self.ram[self.stackp]
         #get next ram
         self.reg[self.ram[self.pc + 1]] = value
         #increment stackp
         self.stackp +=1
         self.pc += 2
+
+        def CALL(self, operand_a, operand_b):
+            self.PUSH(self.pc+2)
+            self.pc =self.reg[operand_a]
+
+
+        def RET(self):
+            self.pc = self.POP()
+
+        def CMP(self):
+        def JMP(self):
+        def JEQ(self):
+        def JNE(self):
 
 ## check- Need Stack & CALL/RET (& subroutine calls) from Wed/Thrus emplimented to work?--
 ### CALL ###:
@@ -132,8 +152,6 @@ class CPU:
 
     def load(self, f):
         """Load a program into memory."""
-       
-
         file = f
         program = open(f"{file}", "rb")
         address = 0
@@ -196,16 +214,14 @@ class CPU:
 #read memory address
 #store memory address in IR
 ##using ram_read(), read the bytes at PC+1 and PC+2 from RAM into variables operand_a and operand_b in case the instruction needs them.
-#set instruction for what to do 
-#set pc pointer to next instruction(depending how many bytes previous action took)
-#LDI(set value of register to int)=3byte op?(register, value)
-#HLT=1byte op
-#PRN=2byte op?(get register, get value)
         
         self.running =True
 
         while self.running:
+            self.trace()
             ir= self.ram_read(self.pc)
+            operand_a = self.ram_read(self.pc + 1)
+            operand_b = self.ram_read(self.pc + 2)
             #need to  call fn
             self.ops(ir)
 
