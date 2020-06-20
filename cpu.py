@@ -1,7 +1,7 @@
 """CPU functionality."""
-
 import sys
 
+#ops
 LDI = 0b10000010 
 PRN = 0b01000111
 HLT = 0b00000001 
@@ -24,7 +24,7 @@ class CPU:
         self.ram = [0] *256
         self.reg =[0] *8
         self.pc =0
-        self.sp=7 #r7 is resreved top of stack location (r4 if empty)
+        self.sp=7 #r7 is resreved top of stack location
         self.E=True #Equal flag
         self.branch_table ={
         LDI: self.LDI, 
@@ -41,50 +41,51 @@ class CPU:
         JEQ: self.JEQ
         }
 
-        
-    def LDI(self):
-        reg=self.ram_read(self.pc+1)
-        value = self.ram_read(self.pc+2)
-        self.reg[reg] =value
-        self.pc+=3
+    def LDI(self): #3bit op
+        reg=self.ram_read(self.pc+1) #read reg
+        value = self.ram_read(self.pc+2) 
+        self.reg[reg] =value #get val at reg
+        self.pc+=3 #move pc
 
-    def PRN(self):
-        reg=self.ram_read(self.pc+1)
-        value =self.reg[reg]
-        print(value)
+    def PRN(self):#2bit op
+        reg=self.ram_read(self.pc+1) #read reg
+        value =self.reg[reg]#get reg  val
+        print(value)#print val
         self.pc+=2
 
     def HLT(self):
         self.running =False
         self.pc+=1
 
-    def MUL(self):
+    def MUL(self):#3bit op
         self.alu('MUL', self.pc+1, self.pc+2)
         self.pc+=3
 
     def PUSH(self):
-        self.sp -=1
-        reg = self.ram[self.pc + 1]
-        value = self.reg[reg]
-        self.ram[self.sp] = value
-        self.pc += 2
+        self.sp -=1 #decrement sp
+        reg = self.ram[self.pc + 1] ##get val to store
+        value = self.reg[reg] #set val to push
+        self.ram[self.sp] = value #store val
+        self.pc += 2 #move pc
 
     def POP(self):
-        value = self.ram[self.sp]
-        self.reg[self.ram[self.pc + 1]] = value
-        self.sp +=1
-        self.pc += 2
+        value = self.ram[self.sp]#set val to stack loc
+        self.reg[self.ram[self.pc + 1]] = value #set val from stack loc
+        self.sp +=1 #move sp
+        self.pc += 2 #move pc
 ### CALL ###:
 #subroutine (function) at the address stored in the register.
 #address of instruction directly after CALL pushed on stack. #returns where we left off after fn finishes
 #PC set to the address stored in the given register
 # go to location in RAM and run 1st instruction
 # PC can move forward or backwards from its current location.
-#Machine code:
 #01010000 00000rrr
 #50 0r
     def CALL(self):
-        self.reg[self.sp] -= 1
+        self.reg[self.sp] -= 1 #push on stack
+        #get address/val at address
+        #set pc to address,
+        #run op at sp in reg
         self.ram_write(self.pc + 2, self.reg[self.sp])
 
 
@@ -93,23 +94,21 @@ class CPU:
         self.reg[self.sp] += 1
 
     def CMP(self):
-        reg_a =self.ram_read(self.pc+1)
+        reg_a =self.ram_read(self.pc+1) #set reg idnex
         reg_b=self.ram_read(self.pc+2)
-        self.alu('CMP', reg_a, reg_b)
+        self.alu('CMP', reg_a, reg_b) #compare op at reg's
         self.pc+=3
 
 ##- JMP:
 #Jump to the address stored in the given register.
 #Set the PC to the address stored in the given register.
-#Machine code:
 #01010100 00000rrr
 #54 0r
     def JMP(self):
-        reg =self.ram[self.pc+1]
-        self.pc = self.reg[reg]
+        reg =self.ram[self.pc+1] #get reg loc
+        self.pc = self.reg[reg] #set pc to reg loc
 ##- JEQ:
 #If equal flag is set (true), jump to address stored in the given register.
-#Machine code:
 #01010101 00000rrr
 #55 0r
     def JEQ(self):
@@ -120,7 +119,6 @@ class CPU:
             self.pc+=2
 ##- JNE:
 #If E flag is clear (false, 0), jump to the address stored in the given register.
-#Machine code:
 #01010110 00000rrr
 #56 0r
     def JNE(self):
@@ -131,11 +129,9 @@ class CPU:
             self.pc+=2
 
 ##### SPRINT TASKS #######
-
 #Add the CMP instruction and equal flag to your LS-8.
 #Add the JMP instruction.
 #Add the JEQ and JNE instructions.
- 
 
  #ram_read:ACCEPT ADDRESS TO READ-- and RETURNS VALUE @ address
  #ram_write:ACCEPT VALUE TO WRITE AND ADDRESS TO WRITE TO
@@ -144,7 +140,6 @@ class CPU:
 
     def ram_write(self, position, value):
         self.ram[position] =value
-
 
     def load(self, f):
         """Load a program into memory."""
@@ -160,8 +155,6 @@ class CPU:
                 self.ram[address] = v
                 address += 1
     
-        # For now, we've just hardcoded a program:
-
         #program = [
          #   # From print8.ls8
           #  0b10000010, # LDI R0,8
@@ -171,11 +164,9 @@ class CPU:
            # 0b00000000,
            # 0b00000001, # HLT
         #]
-
         #for instruction in program:
          #   self.ram[address] = instruction
           #  address += 1
-
 
 ##- CMP:
 #instruction handled by the ALU.
@@ -184,7 +175,6 @@ class CPU:
 #If equal, set the Equal E flag to 1, otherwise set it to 0.
 #If registerA is less than registerB, set the Less-than L flag to 1, otherwise set it to 0.
 #If registerA is greater than registerB, set the Greater-than G flag to 1, otherwise set it to 0.
-#Machine code:
 #10100111 00000aaa 00000bbb
 #A7 0a 0b
     def alu(self, op, reg_a, reg_b):
